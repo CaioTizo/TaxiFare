@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/caiotizo/code/CaioTizo/TaxiFareModel/mlruns/1/6f1494d980804cffbeec357a8771127b/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: deleted
+name: ''
+run_id: 6f1494d980804cffbeec357a8771127b
+run_uuid: 6f1494d980804cffbeec357a8771127b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1648162203303
+status: 1
+tags: []
+user_id: unknown
