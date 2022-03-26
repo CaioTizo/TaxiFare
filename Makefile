@@ -53,6 +53,24 @@ BUCKET_FOLDER=data
 # name for the uploaded file inside of the bucket (we choose not to rename the file that we upload)
 BUCKET_FILE_NAME=$(shell basename ${LOCAL_PATH})
 
+JOB_NAME=taxi_fare_training_real_pipeline_$(shell date +'%Y%m%d_%H%M%S')
+BUCKET_TRAINING_FOLDER = 'trainings'
+PACKAGE_NAME=TaxiFareModel
+FILENAME=trainer
+PYTHON_VERSION=3.7
+FRAMEWORK=scikit-learn
+RUNTIME_VERSION=1.15
+
 upload_data:
     # @gsutil cp train_1k.csv gs://wagon-ml-my-bucket-name/data/train_1k.csv
 	@gsutil cp ${LOCAL_PATH} gs://${BUCKET_NAME}/${BUCKET_FOLDER}/${BUCKET_FILE_NAME}
+
+gcp_submit_training:
+	gcloud ai-platform jobs submit training ${JOB_NAME} \
+		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
+		--package-path ${PACKAGE_NAME} \
+		--module-name ${PACKAGE_NAME}.${FILENAME} \
+		--python-version=${PYTHON_VERSION} \
+		--runtime-version=${RUNTIME_VERSION} \
+		--region ${REGION} \
+		--stream-logs

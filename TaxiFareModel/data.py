@@ -1,8 +1,11 @@
 import pandas as pd
-
+from google.cloud import storage
+import joblib
 from TaxiFareModel.utils import simple_time_tracker
 
-AWS_BUCKET_PATH = "s3://wagon-public-datasets/taxi-fare-train.csv"
+STORAGE_LOCATION = 'models/TaxiFare/model.joblib'
+BUCKET_NAME = 'wagon-data-batch769-caiotizo'
+AWS_BUCKET_PATH = f"gs://{BUCKET_NAME}/data/train_1k.csv"
 LOCAL_PATH = "your_localpath"
 
 DIST_ARGS = dict(start_lat="pickup_latitude",
@@ -12,7 +15,7 @@ DIST_ARGS = dict(start_lat="pickup_latitude",
 
 
 @simple_time_tracker
-def get_data(nrows=10000, local=False, **kwargs):
+def get_data(nrows=1000, local=False, **kwargs):
     """method to get the training data (or a portion of it) from google cloud bucket"""
     # Add Client() here
     if local:
@@ -40,6 +43,30 @@ def clean_df(df, test=False):
     df = df[df["dropoff_latitude"].between(left=40, right=42)]
     df = df[df["dropoff_longitude"].between(left=-74, right=-72.9)]
     return df
+
+def upload_model_to_gcp():
+
+    client = storage.Client()
+
+    bucket = client.bucket(BUCKET_NAME)
+
+    blob = bucket.blob(STORAGE_LOCATION)
+
+    blob.upload_from_filename('model.joblib')
+
+
+def save_model(reg):
+    """method that saves the model into a .joblib file and uploads it on Google Storage /models folder
+    HINTS : use joblib library and google-cloud-storage"""
+
+    # saving the trained model to disk is mandatory to then beeing able to upload it to storage
+    # Implement here
+    joblib.dump(reg, 'model.joblib')
+    print("saved model.joblib locally")
+
+    # Implement here
+    upload_model_to_gcp()
+    print(f"uploaded model.joblib to gcp cloud storage under \n => {STORAGE_LOCATION}")
 
 
 if __name__ == "__main__":

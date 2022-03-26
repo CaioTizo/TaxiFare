@@ -2,13 +2,12 @@ import multiprocessing
 import time
 import warnings
 from tempfile import mkdtemp
-
 import category_encoders as ce
 import joblib
 import mlflow
 import pandas as pd
-from TaxiFareModel.data import get_data, clean_df, DIST_ARGS
-from TaxiFareModel.encoders import TimeFeaturesEncoder, DistanceTransformer, AddGeohash, Direction, \
+from TaxiFareModel.data import get_data, clean_df, DIST_ARGS, upload_model_to_gcp
+from TaxiFareModel.encoders_t import TimeFeaturesEncoder, DistanceTransformer, AddGeohash, Direction, \
     DistanceToCenter
 from TaxiFareModel.utils import compute_rmse, simple_time_tracker
 from memoized_property import memoized_property
@@ -25,7 +24,6 @@ from xgboost import XGBRegressor
 
 MODEL_DIRECTY = "PipelineTest"  # must the same as PATH_TO_MODEL inside Makefile
 MLFLOW_URI = "https://mlflow.lewagon.co/"
-
 
 class Trainer(object):
     ESTIMATOR = "Linear"
@@ -102,7 +100,7 @@ class Trainer(object):
         pipe_time_features = make_pipeline(TimeFeaturesEncoder(time_column='pickup_datetime'),
                                            OneHotEncoder(handle_unknown='ignore'))
         pipe_distance = make_pipeline(DistanceTransformer(distance_type=dist, **DIST_ARGS), StandardScaler())
-        pipe_geohash = make_pipeline(AddGeohash(), ce.HashingEncoder())
+        pipe_geohash = make_pipeline(AddGeohash(), ce.hashing.HashingEncoder())
         pipe_direction = make_pipeline(Direction(), StandardScaler())
         pipe_distance_to_center = make_pipeline(DistanceToCenter(), StandardScaler())
 
@@ -159,6 +157,7 @@ class Trainer(object):
         """Save the model into a .joblib format"""
         joblib.dump(self.pipeline, 'model.joblib')
         print(colored("model.joblib saved locally", "green"))
+        upload_model_to_gcp()
 
     ### MLFlow methods
     @memoized_property
@@ -211,7 +210,7 @@ if __name__ == "__main__":
     experiment = "taxifare_set_YOURNAME"
     if "YOURNAME" in experiment:
         print(colored("Please define MlFlow experiment variable with your own name", "red"))
-    params = dict(nrows=1000000,
+    params = dict(nrows=1000,
                   local=False,  # set to False to get data from GCP (Storage or BigQuery)
                   optimize=True,
                   estimator="xgboost",
